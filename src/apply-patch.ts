@@ -1,0 +1,128 @@
+import { Patch, produceWithPatches } from 'immer'
+import * as Y from 'yjs'
+
+import { isJSONArray, isJSONObject, isJSONPrimitive, JSONValue, Recipe, Snapshot } from './util'
+
+function toYDataType(v: JSONValue) {
+  if (isJSONPrimitive(v)) {
+    return v
+  } else if (isJSONArray(v)) {
+    const yArray = new Y.Array()
+    yArray.push(v.map(toYDataType))
+    return yArray
+  } else if (isJSONObject(v)) {
+    const yMap = new Y.Map()
+    Object.entries(v).forEach(([k, v]) => {
+      yMap.set(k, toYDataType(v))
+    })
+    return yMap
+  } else {
+    return undefined
+  }
+}
+
+function replaceYTarget(yTarget: Y.Map<unknown> | Y.Array<unknown>, value: JSONValue) {
+  if (yTarget instanceof Y.Map) {
+    if (!isJSONObject(value)) {
+      throw new Error(`Cannot update a Y.Map with a non-object value ${JSON.stringify(value)}`)
+    }
+    yTarget.clear()
+    for (const k in value) {
+      yTarget.set(k, toYDataType(value[k]!))
+    }
+  } else if (yTarget instanceof Y.Array) {
+    if (!isJSONArray(value)) {
+      throw new Error(`Cannot update a Y.Array with a non-array value ${JSON.stringify(value)}`)
+    }
+    yTarget.delete(0, yTarget.length)
+    yTarget.push(value.map(toYDataType))
+  } else {
+    throw new Error(`The yTarget must be either Y.Map or Y.Array, but got ${yTarget}`)
+  }
+}
+
+function applyPatchToProperty(
+  yTarget: Y.Map<unknown> | Y.Array<unknown>,
+  op: Patch['op'],
+  property: string | number,
+  value: JSONValue,
+) {
+  if (yTarget instanceof Y.Map) {
+    if (typeof property === 'string') {
+      switch (op) {
+        case 'add':
+        case 'replace':
+          yTarget.set(property, toYDataType(value))
+          break
+        case 'remove':
+          yTarget.delete(property)
+          break
+      }
+    } else {
+      throw new Error(`The property applying to a Y.Map must be a string, but got ${property}`)
+    }
+  } else if (yTarget instanceof Y.Array) {
+    if (typeof property === 'number') {
+      switch (op) {
+        case 'add':
+          yTarget.insert(property, [toYDataType(value)])
+          break
+        case 'replace':
+          yTarget.delete(property)
+          yTarget.insert(property, [toYDataType(value)])
+          break
+        case 'remove':
+          yTarget.delete(property)
+          break
+      }
+    } else if (property === 'length') {
+      if (typeof value !== 'number') {
+        throw new Error(`The value applying to a Y.Array length must be a number, but got ${JSON.stringify(value)}`)
+      }
+      if (value < yTarget.length) {
+        const diff = yTarget.length - value
+        yTarget.delete(value, diff)
+      }
+    } else {
+      throw new Error(`The property applying to a Y.Array must be either number or length, but got ${property}`)
+    }
+  } else {
+    throw new Error(`The yTarget must be either Y.Map or Y.Array, but got ${yTarget}`)
+  }
+}
+
+// MARK: Apply Patch to Y Target
+export function defaultApplyPatch(yTarget: Y.Map<unknown> | Y.Array<unknown>, patch: Patch) {
+  const { path, op } = patch
+  const value = patch.value as JSONValue
+
+  // Apply patch to the whole yjs target
+  if (path.length === 0) {
+    if (op !== 'replace') {
+      throw new Error(`Cannot apply patch to the whole yjs target with op ${op}`)
+    }
+    replaceYTarget(yTarget, value)
+    return
+  }
+
+  let yNestedTarget = yTarget
+  for (let i = 0; i < path.length - 1; ++i) {
+    const key = path[i]
+    yNestedTarget = yNestedTarget.get(key as never) as Y.Map<unknown> | Y.Array<unknown>
+  }
+
+  const property = path[path.length - 1]!
+  applyPatchToProperty(yNestedTarget, op, property, value)
+}
+
+export function applyPatches<S extends Snapshot>(
+  source: Y.Map<unknown> | Y.Array<unknown>,
+  snapshot: S,
+  recipe: Recipe<S>,
+  applyPatch: typeof defaultApplyPatch,
+) {
+  const [, patches] = produceWithPatches(snapshot, recipe)
+  for (const patch of patches) {
+    applyPatch(source, patch)
+  }
+}
