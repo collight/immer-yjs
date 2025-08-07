@@ -1,1 +1,1 @@
-export * from './Binder'
+export * from './YjsBinding'

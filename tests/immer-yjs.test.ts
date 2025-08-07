@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'
 
-import { bind } from '../src'
+import { YjsBinding } from '../src'
 import { createSampleObject, id1, id2, id3 } from './sample-data'
 
 test('bind usage demo', () => {
@@ -16,18 +16,19 @@ test('bind usage demo', () => {
   const map = doc.getMap(topLevelMap)
 
   // bind the top-level CRDT type, works for Y.Array as well
-  const binder = bind<typeof initialObj>(map)
+  const binding = YjsBinding.from<typeof initialObj>(map)
+  binding.observe()
 
   // initialize document with sample data
-  binder.update(() => {
+  binding.update(() => {
     return initialObj
   })
 
   // snapshot reference should not change if no update
-  expect(binder.get()).toBe(binder.get())
+  expect(binding.get()).toBe(binding.get())
 
   // get current state as snapshot
-  const snapshot1 = binder.get()
+  const snapshot1 = binding.get()
 
   // should equal to initial structurally
   expect(snapshot1).toStrictEqual(initialObj)
@@ -53,7 +54,7 @@ test('bind usage demo', () => {
   expect(batter0.get('id')).toBeTypeOf('string')
 
   // update the state with immer
-  binder.update(state => {
+  binding.update(state => {
     state[id1]!.ppu += 0.1
     const d1 = state[id1]
 
@@ -64,7 +65,7 @@ test('bind usage demo', () => {
   })
 
   // get snapshot after modified
-  const snapshot2 = binder.get()
+  const snapshot2 = binding.get()
   console.warn('snapshot2', snapshot2)
 
   // snapshot1 unchanged
@@ -95,25 +96,25 @@ test('bind usage demo', () => {
   expect((map.get(id1) as Y.Map<unknown>).get('topping')).toBe(yd1.get('topping'))
 
   // save the length for later comparison
-  const expectLength = binder.get()[id1]!.batters.batter.length
+  const expectLength = binding.get()[id1]!.batters.batter.length
 
   // change from y.js
   ;((yd1.get('batters') as Y.Map<unknown>).get('batter') as Y.Array<unknown>).push([{ id: '1005', type: 'test' }])
 
   // change reflected in snapshot
-  expect(binder.get()[id1]!.batters.batter.at(-1)).toStrictEqual({ id: '1005', type: 'test' })
+  expect(binding.get()[id1]!.batters.batter.at(-1)).toStrictEqual({ id: '1005', type: 'test' })
 
   // now the length + 1
-  expect(binder.get()[id1]!.batters.batter.length).toBe(expectLength + 1)
+  expect(binding.get()[id1]!.batters.batter.length).toBe(expectLength + 1)
 
   // delete something from yjs
   yd1.delete('topping')
 
   // deletion reflected in snapshot
-  expect(binder.get()[id1]!.topping).toBeUndefined()
+  expect(binding.get()[id1]!.topping).toBeUndefined()
 
   // release the observer, so the CRDT type can be bind again
-  binder.unbind()
+  binding.unobserve()
 })
 
 test('boolean in array', () => {
@@ -121,9 +122,10 @@ test('boolean in array', () => {
 
   const map = doc.getMap('data')
 
-  const binder = bind<{ k1: boolean; k2: boolean; k3: boolean[] }>(map)
+  const binding = YjsBinding.from<{ k1: boolean; k2: boolean; k3: boolean[] }>(map)
+  binding.observe()
 
-  binder.update(state => {
+  binding.update(state => {
     state.k1 = true
     state.k2 = false
     state.k3 = [true, false, true]
@@ -139,7 +141,7 @@ test('customize applyPatch', () => {
 
   const initialObj = createSampleObject() // plain object
 
-  const binder = bind<typeof initialObj>(map, {
+  const binding = YjsBinding.from<typeof initialObj>(map, {
     applyPatch: (target, patch, applyPatch) => {
       // you can inspect the patch.path and decide what to do with target
       // optionally delegate to the default patch handler
@@ -148,85 +150,87 @@ test('customize applyPatch', () => {
       // can also postprocessing after the default behavior is applied
     },
   })
+  binding.observe()
 
-  binder.update(() => initialObj)
+  binding.update(() => initialObj)
 
-  expect(binder.get()).toStrictEqual(initialObj)
+  expect(binding.get()).toStrictEqual(initialObj)
 
-  expect(binder.get()).toStrictEqual(map.toJSON())
+  expect(binding.get()).toStrictEqual(map.toJSON())
 
-  expect(binder.get()).toBe(binder.get())
+  expect(binding.get()).toBe(binding.get())
 })
 
 describe('array splice', () => {
   function prepareArrayDoc(...items: number[]) {
     const doc = new Y.Doc()
-    const binder = bind<{ array: number[] }>(doc.getMap('data'), {
+    const binding = YjsBinding.from<{ array: number[] }>(doc.getMap('data'), {
       applyPatch: (target, patch, apply) => {
         apply(target, patch)
       },
     })
-    binder.update(data => {
+    binding.observe()
+    binding.update(data => {
       data.array = items
     })
-    return { doc, binder }
+    return { doc, binding }
   }
 
   test('remove nonexistent item', () => {
-    const { binder } = prepareArrayDoc()
+    const { binding } = prepareArrayDoc()
 
-    binder.update(data => {
+    binding.update(data => {
       data.array.splice(0, 1)
     })
 
-    expect(binder.get().array.length).toBe(0)
+    expect(binding.get().array.length).toBe(0)
   })
 
   test('remove single item', () => {
-    const { binder } = prepareArrayDoc(1)
+    const { binding } = prepareArrayDoc(1)
 
-    binder.update(data => {
+    binding.update(data => {
       data.array.splice(0, 1)
     })
 
-    expect(binder.get().array.length).toBe(0)
+    expect(binding.get().array.length).toBe(0)
   })
 
   test('remove first item of many', () => {
-    const { binder } = prepareArrayDoc(1, 2, 3)
+    const { binding } = prepareArrayDoc(1, 2, 3)
 
     // results in ops
     // replace array[0] value 2
     // replace array[1] value 3
     // replace array.length value 2
-    binder.update(data => {
+    binding.update(data => {
       data.array.splice(0, 1)
     })
 
-    expect(binder.get().array.length).toBe(2)
+    expect(binding.get().array.length).toBe(2)
   })
 
   test('remove last multiple items', () => {
-    const { binder } = prepareArrayDoc(1, 2, 3, 4)
+    const { binding } = prepareArrayDoc(1, 2, 3, 4)
 
-    binder.update(data => {
+    binding.update(data => {
       data.array.splice(2, 2)
     })
 
-    const result = binder.get().array
+    const result = binding.get().array
     expect(result.length).toBe(2)
     expect(result[0]).toBe(1)
     expect(result[1]).toBe(2)
   })
 
   test('replace last multiple items', () => {
-    const { binder } = prepareArrayDoc(1, 2, 3, 4)
+    const { binding } = prepareArrayDoc(1, 2, 3, 4)
 
-    binder.update(data => {
+    binding.update(data => {
       data.array.splice(2, 2, 5, 6)
     })
 
-    const result = binder.get().array
+    const result = binding.get().array
     expect(result.length).toBe(4)
     expect(result[0]).toBe(1)
     expect(result[1]).toBe(2)
@@ -235,26 +239,26 @@ describe('array splice', () => {
   })
 
   test('remove first multiple items', () => {
-    const { binder } = prepareArrayDoc(1, 2, 3, 4)
+    const { binding } = prepareArrayDoc(1, 2, 3, 4)
 
-    binder.update(data => {
+    binding.update(data => {
       data.array.splice(0, 2)
     })
 
-    const result = binder.get().array
+    const result = binding.get().array
     expect(result.length).toBe(2)
     expect(result[0]).toBe(3)
     expect(result[1]).toBe(4)
   })
 
   test('replace first multiple items', () => {
-    const { binder } = prepareArrayDoc(1, 2, 3, 4)
+    const { binding } = prepareArrayDoc(1, 2, 3, 4)
 
-    binder.update(data => {
+    binding.update(data => {
       data.array.splice(0, 2, 5, 6)
     })
 
-    const result = binder.get().array
+    const result = binding.get().array
     expect(result.length).toBe(4)
     expect(result[0]).toBe(5)
     expect(result[1]).toBe(6)

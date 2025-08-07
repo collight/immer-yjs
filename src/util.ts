@@ -1,3 +1,7 @@
+import * as Y from 'yjs'
+
+export type YObject = Y.Map<unknown> | Y.Array<unknown>
+
 export type JSONPrimitive = string | number | boolean | null
 
 export type JSONValue = JSONPrimitive | JSONObject | JSONArray

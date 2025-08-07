@@ -1,7 +1,7 @@
 import { Patch, produceWithPatches } from 'immer'
 import * as Y from 'yjs'
 
-import { isJSONArray, isJSONObject, isJSONPrimitive, JSONValue, Recipe, Snapshot } from './util'
+import { isJSONArray, isJSONObject, isJSONPrimitive, JSONValue, Recipe, Snapshot, YObject } from './util'
 
 function toYDataType(v: JSONValue) {
   if (isJSONPrimitive(v)) {
@@ -21,7 +21,7 @@ function toYDataType(v: JSONValue) {
   }
 }
 
-function replaceYTarget(yTarget: Y.Map<unknown> | Y.Array<unknown>, value: JSONValue) {
+function replaceYTarget(yTarget: YObject, value: JSONValue) {
   if (yTarget instanceof Y.Map) {
     if (!isJSONObject(value)) {
       throw new Error(`Cannot update a Y.Map with a non-object value ${JSON.stringify(value)}`)
@@ -41,12 +41,7 @@ function replaceYTarget(yTarget: Y.Map<unknown> | Y.Array<unknown>, value: JSONV
   }
 }
 
-function applyPatchToProperty(
-  yTarget: Y.Map<unknown> | Y.Array<unknown>,
-  op: Patch['op'],
-  property: string | number,
-  value: JSONValue,
-) {
+function applyPatchToProperty(yTarget: YObject, op: Patch['op'], property: string | number, value: JSONValue) {
   if (yTarget instanceof Y.Map) {
     if (typeof property === 'string') {
       switch (op) {
@@ -92,7 +87,7 @@ function applyPatchToProperty(
 }
 
 // MARK: Apply Patch to Y Target
-export function defaultApplyPatch(yTarget: Y.Map<unknown> | Y.Array<unknown>, patch: Patch) {
+export function defaultApplyPatch(yTarget: YObject, patch: Patch): void {
   const { path, op } = patch
   const value = patch.value as JSONValue
 
@@ -108,7 +103,7 @@ export function defaultApplyPatch(yTarget: Y.Map<unknown> | Y.Array<unknown>, pa
   let yNestedTarget = yTarget
   for (let i = 0; i < path.length - 1; ++i) {
     const key = path[i]
-    yNestedTarget = yNestedTarget.get(key as never) as Y.Map<unknown> | Y.Array<unknown>
+    yNestedTarget = yNestedTarget.get(key as never) as YObject
   }
 
   const property = path[path.length - 1]!
@@ -116,13 +111,14 @@ export function defaultApplyPatch(yTarget: Y.Map<unknown> | Y.Array<unknown>, pa
 }
 
 export function applyPatches<S extends Snapshot>(
-  source: Y.Map<unknown> | Y.Array<unknown>,
+  source: YObject,
   snapshot: S,
   recipe: Recipe<S>,
   applyPatch: typeof defaultApplyPatch,
-) {
-  const [, patches] = produceWithPatches(snapshot, recipe)
+): S {
+  const [newSnapshot, patches] = produceWithPatches(snapshot, recipe)
   for (const patch of patches) {
     applyPatch(source, patch)
   }
+  return newSnapshot
 }

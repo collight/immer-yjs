@@ -1,9 +1,9 @@
 import { produce } from 'immer'
 import * as Y from 'yjs'
 
-import { isJSONArray, isJSONObject, JSONArray, JSONObject, JSONValue, Snapshot } from './util'
+import { isJSONArray, isJSONObject, JSONArray, JSONObject, JSONValue, Snapshot, YObject } from './util'
 
-function toPlainValue(v: Y.Map<unknown> | Y.Array<unknown> | JSONValue) {
+function toPlainValue(v: YObject | JSONValue) {
   if (v instanceof Y.Map || v instanceof Y.Array) {
     return v.toJSON() as JSONObject | JSONArray
   } else {
@@ -20,7 +20,7 @@ function applyYEvent(base: JSONValue, event: Y.YEvent<Y.AbstractType<unknown>>) 
       switch (change.action) {
         case 'add':
         case 'update':
-          base[key] = toPlainValue(source.get(key) as Y.Map<unknown> | Y.Array<unknown> | JSONValue)
+          base[key] = toPlainValue(source.get(key) as YObject | JSONValue)
           break
         case 'delete':
           // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
