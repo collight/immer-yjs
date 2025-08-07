@@ -4,8 +4,11 @@ import type * as Y from 'yjs'
 import { bind } from '../Binder'
 import type { Recipe, Snapshot } from '../util'
 
-export function atomWithYjsBinder<S extends Snapshot>(yjsData: Y.Map<unknown> | Y.Array<unknown>) {
-  const binder = bind<S>(yjsData)
+export function atomWithYjs<S extends Snapshot>(y: Y.Map<unknown> | Y.Array<unknown>, initialData?: S) {
+  const binder = bind<S>(y)
+  if (initialData) {
+    binder.update(() => initialData)
+  }
 
   // Base atom holds the actual current snapshot state
   const internalAtom = atom(binder.get())
