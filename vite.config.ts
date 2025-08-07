@@ -26,9 +26,8 @@ const srcPath = path.resolve(__dirname, 'src')
 const distPath = path.resolve(__dirname, 'dist')
 
 const entry = path.resolve(srcPath, 'index.ts')
+const jotaiEntry = path.resolve(srcPath, 'jotai/index.ts')
 const external = [...getExternal(pkg), ...builtinModules]
-
-console.log('src path', srcPath)
 
 export default defineConfig((): UserConfig => {
   return {
@@ -41,7 +40,7 @@ export default defineConfig((): UserConfig => {
       sourcemap: true,
 
       rollupOptions: {
-        input: entry,
+        input: [entry, jotaiEntry],
         external: external,
         preserveEntrySignatures: 'strict',
         output: [

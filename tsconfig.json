@@ -6,7 +6,7 @@
 
     "rootDir": "src",
 
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "DOM"],
     "types": ["vite/client"],
 
     "noErrorTruncation": true,

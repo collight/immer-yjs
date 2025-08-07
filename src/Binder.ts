@@ -1,9 +1,11 @@
-import { Patch } from 'immer'
+import { enablePatches, Patch } from 'immer'
 import * as Y from 'yjs'
 
 import { applyPatches, defaultApplyPatch } from './apply-patch'
 import { applyYEvents } from './apply-y-event'
 import { Recipe, Snapshot } from './util'
+
+enablePatches()
 
 // MARK: Binder
 export type ListenerFn<S extends Snapshot> = (snapshot: S) => void

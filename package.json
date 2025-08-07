@@ -6,6 +6,16 @@
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs"
+    },
+    "./jotai": {
+      "import": "./dist/esm/jotai/index.js",
+      "require": "./dist/cjs/jotai/index.cjs"
+    }
+  },
   "files": [
     "dist"
   ],
@@ -22,6 +32,7 @@
   },
   "peerDependencies": {
     "immer": "^10.1.1",
+    "jotai": "^2.13.0",
     "yjs": "^13.5.35"
   },
   "devDependencies": {
