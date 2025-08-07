@@ -27,7 +27,11 @@ export class YjsBinding<S extends Snapshot> {
     const applyPatch: ApplyPatchFn = optionsApplyPatch
       ? (yTarget, patch) => optionsApplyPatch(yTarget, patch, defaultApplyPatch)
       : defaultApplyPatch
-    return new this(y, options.initialData ?? (y.toJSON() as S), applyPatch)
+    const binding = new this<S>(y, applyPatch)
+    if (options.initialData) {
+      binding.update(() => options.initialData)
+    }
+    return binding
   }
 
   /**
@@ -66,17 +70,15 @@ export class YjsBinding<S extends Snapshot> {
     this.y.unobserveDeep(this.observer)
   }
 
+  private snapshot = this.y.toJSON() as S
   private readonly subscriptions = new Set<ListenerFn<S>>()
-  private readonly observer: (events: Y.YEvent<Y.AbstractType<unknown>>[]) => void = (
-    events: Y.YEvent<Y.AbstractType<unknown>>[],
-  ) => {
+  private readonly observer = (events: Y.YEvent<Y.AbstractType<unknown>>[]): void => {
     this.snapshot = applyYEvents(this.get(), events)
     this.subscriptions.forEach(fn => fn(this.get()))
   }
 
   constructor(
     readonly y: YObject,
-    private snapshot: S,
     readonly applyPatch: ApplyPatchFn,
   ) {}
 }
