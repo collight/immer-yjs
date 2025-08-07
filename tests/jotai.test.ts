@@ -18,7 +18,7 @@ describe('atomWithYjsBinder - integration', () => {
     expect(snapshot).toEqual({ count: 1 })
   })
 
-  it.only('should apply Immer-style recipe and reflect in Y.Map', () => {
+  it('should apply Immer-style recipe and reflect in Y.Map', () => {
     const yDoc = new Y.Doc()
     const yMap = yDoc.getMap('foo')
     yMap.set('count', 2)
