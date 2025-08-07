@@ -7,7 +7,7 @@ import { Recipe, Snapshot, YObject } from './util'
 
 enablePatches()
 
-// MARK: Binding
+// MARK: YjsBinding
 export type ListenerFn<S extends Snapshot> = (snapshot: S) => void
 export type UnsubscribeFn = () => void
 
@@ -79,4 +79,11 @@ export class YjsBinding<S extends Snapshot> {
     private snapshot: S,
     readonly applyPatch: ApplyPatchFn,
   ) {}
+}
+
+// MARK: bind
+export function bind<S extends Snapshot>(y: YObject, options?: Partial<YjsBindingOptions<S>>) {
+  const binding = YjsBinding.from(y, options)
+  binding.observe()
+  return binding
 }

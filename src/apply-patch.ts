@@ -3,19 +3,14 @@ import * as Y from 'yjs'
 
 import { isJSONArray, isJSONObject, isJSONPrimitive, JSONValue, Recipe, Snapshot, YObject } from './util'
 
-function toYDataType(v: JSONValue) {
+function toYType(v: JSONValue): YObject | JSONValue | undefined {
   if (isJSONPrimitive(v)) {
     return v
   } else if (isJSONArray(v)) {
-    const yArray = new Y.Array()
-    yArray.push(v.map(toYDataType))
-    return yArray
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return Y.Array.from(v.map(toYType).filter(v => v !== undefined) as any[])
   } else if (isJSONObject(v)) {
-    const yMap = new Y.Map()
-    Object.entries(v).forEach(([k, v]) => {
-      yMap.set(k, toYDataType(v))
-    })
-    return yMap
+    return new Y.Map(Object.entries(v).map(([k, v]) => [k, toYType(v)]))
   } else {
     return undefined
   }
@@ -28,14 +23,14 @@ function replaceYTarget(yTarget: YObject, value: JSONValue) {
     }
     yTarget.clear()
     for (const k in value) {
-      yTarget.set(k, toYDataType(value[k]!))
+      yTarget.set(k, toYType(value[k]!))
     }
   } else if (yTarget instanceof Y.Array) {
     if (!isJSONArray(value)) {
       throw new Error(`Cannot update a Y.Array with a non-array value ${JSON.stringify(value)}`)
     }
     yTarget.delete(0, yTarget.length)
-    yTarget.push(value.map(toYDataType))
+    yTarget.push(value.map(toYType))
   } else {
     throw new Error(`The yTarget must be either Y.Map or Y.Array, but got ${yTarget}`)
   }
@@ -47,7 +42,7 @@ function applyPatchToProperty(yTarget: YObject, op: Patch['op'], property: strin
       switch (op) {
         case 'add':
         case 'replace':
-          yTarget.set(property, toYDataType(value))
+          yTarget.set(property, toYType(value))
           break
         case 'remove':
           yTarget.delete(property)
@@ -60,11 +55,11 @@ function applyPatchToProperty(yTarget: YObject, op: Patch['op'], property: strin
     if (typeof property === 'number') {
       switch (op) {
         case 'add':
-          yTarget.insert(property, [toYDataType(value)])
+          yTarget.insert(property, [toYType(value)])
           break
         case 'replace':
           yTarget.delete(property)
-          yTarget.insert(property, [toYDataType(value)])
+          yTarget.insert(property, [toYType(value)])
           break
         case 'remove':
           yTarget.delete(property)
