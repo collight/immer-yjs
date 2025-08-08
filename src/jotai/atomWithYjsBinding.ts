@@ -1,9 +1,12 @@
-import { atom } from 'jotai/vanilla'
+import { atom, WritableAtom } from 'jotai/vanilla'
 
 import type { Recipe, Snapshot, YObject } from '../util'
 import { YjsBinding, YjsBindingOptions } from '../YjsBinding'
 
-export function atomWithYjsBinding<S extends Snapshot>(y: YObject, options?: Partial<YjsBindingOptions<S>>) {
+export function atomWithYjsBinding<S extends Snapshot>(
+  y: YObject,
+  options?: Partial<YjsBindingOptions<S>>,
+): WritableAtom<S, [recipe: Recipe<S>], void> {
   const binding = YjsBinding.from(y, options)
 
   // Base atom holds the actual current snapshot state
@@ -16,7 +19,7 @@ export function atomWithYjsBinding<S extends Snapshot>(y: YObject, options?: Par
     const unsubscribe = binding.subscribe(next => {
       set(next)
     })
-    return () => {
+    return (): void => {
       unsubscribe()
       binding.unobserve()
     }

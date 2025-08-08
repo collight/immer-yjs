@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'
 
-import { YjsBinding } from '../src'
+import { defaultApplyPatch, YjsBinding } from '../src'
 import { createSampleObject, id1, id2, id3 } from './sample-data'
 
 test('bind usage demo', () => {
@@ -142,11 +142,11 @@ test('customize applyPatch', () => {
   const initialObj = createSampleObject() // plain object
 
   const binding = YjsBinding.from<typeof initialObj>(map, {
-    applyPatch: (target, patch, applyPatch) => {
+    applyPatch: (target, patch) => {
       // you can inspect the patch.path and decide what to do with target
       // optionally delegate to the default patch handler
       // (modify target/patch before delegating as you want)
-      applyPatch(target, patch)
+      defaultApplyPatch(target, patch)
       // can also postprocessing after the default behavior is applied
     },
   })
@@ -162,11 +162,11 @@ test('customize applyPatch', () => {
 })
 
 describe('array splice', () => {
-  function prepareArrayDoc(...items: number[]) {
+  const prepareArrayDoc = (...items: number[]): { doc: Y.Doc; binding: YjsBinding<{ array: number[] }> } => {
     const doc = new Y.Doc()
     const binding = YjsBinding.from<{ array: number[] }>(doc.getMap('data'), {
-      applyPatch: (target, patch, apply) => {
-        apply(target, patch)
+      applyPatch: (target, patch) => {
+        defaultApplyPatch(target, patch)
       },
     })
     binding.observe()

@@ -3,6 +3,8 @@ import * as Y from 'yjs'
 
 import { isJSONArray, isJSONObject, isJSONPrimitive, JSONValue, Recipe, Snapshot, YObject } from './util'
 
+export type ApplyPatchFn = typeof defaultApplyPatch
+
 function toYType(v: JSONValue): YObject | JSONValue | undefined {
   if (isJSONPrimitive(v)) {
     return v
@@ -16,7 +18,7 @@ function toYType(v: JSONValue): YObject | JSONValue | undefined {
   }
 }
 
-function replaceYTarget(yTarget: YObject, value: JSONValue) {
+function replaceYTarget(yTarget: YObject, value: JSONValue): void {
   if (yTarget instanceof Y.Map) {
     if (!isJSONObject(value)) {
       throw new Error(`Cannot update a Y.Map with a non-object value ${JSON.stringify(value)}`)
@@ -36,7 +38,7 @@ function replaceYTarget(yTarget: YObject, value: JSONValue) {
   }
 }
 
-function applyPatchToProperty(yTarget: YObject, op: Patch['op'], property: string | number, value: JSONValue) {
+function applyPatchToProperty(yTarget: YObject, op: Patch['op'], property: string | number, value: JSONValue): void {
   if (yTarget instanceof Y.Map) {
     if (typeof property === 'string') {
       switch (op) {
@@ -106,14 +108,14 @@ export function defaultApplyPatch(yTarget: YObject, patch: Patch): void {
 }
 
 export function applyPatches<S extends Snapshot>(
-  source: YObject,
+  yTarget: YObject,
   snapshot: S,
   recipe: Recipe<S>,
   applyPatch: typeof defaultApplyPatch,
 ): S {
   const [newSnapshot, patches] = produceWithPatches(snapshot, recipe)
   for (const patch of patches) {
-    applyPatch(source, patch)
+    applyPatch(yTarget, patch)
   }
   return newSnapshot
 }

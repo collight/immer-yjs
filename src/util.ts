@@ -2,6 +2,8 @@ import * as Y from 'yjs'
 
 export type YObject = Y.Map<unknown> | Y.Array<unknown>
 
+export type YEvent = Y.YEvent<Y.AbstractType<unknown>>
+
 export type JSONPrimitive = string | number | boolean | null
 
 export type JSONValue = JSONPrimitive | JSONObject | JSONArray
