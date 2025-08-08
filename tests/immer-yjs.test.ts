@@ -66,7 +66,6 @@ test('bind usage demo', () => {
 
   // get snapshot after modified
   const snapshot2 = binding.get()
-  console.warn('snapshot2', snapshot2)
 
   // snapshot1 unchanged
   expect(snapshot1).toStrictEqual(initialObj)

@@ -34,7 +34,7 @@ function replaceYTarget(yTarget: YObject, value: JSONValue): void {
     yTarget.delete(0, yTarget.length)
     yTarget.push(value.map(toYType))
   } else {
-    throw new Error(`The yTarget must be either Y.Map or Y.Array, but got ${yTarget}`)
+    throw new Error(`The yTarget must be either Y.Map or Y.Array, but got ${JSON.stringify(yTarget)}`)
   }
 }
 
@@ -79,7 +79,7 @@ function applyPatchToProperty(yTarget: YObject, op: Patch['op'], property: strin
       throw new Error(`The property applying to a Y.Array must be either number or length, but got ${property}`)
     }
   } else {
-    throw new Error(`The yTarget must be either Y.Map or Y.Array, but got ${yTarget}`)
+    throw new Error(`The yTarget must be either Y.Map or Y.Array, but got ${JSON.stringify(yTarget)}`)
   }
 }
 
@@ -93,6 +93,7 @@ export function defaultApplyPatch(yTarget: YObject, patch: Patch): void {
     if (op !== 'replace') {
       throw new Error(`Cannot apply patch to the whole yjs target with op ${op}`)
     }
+    console.log('replaceYTarget dbg')
     replaceYTarget(yTarget, value)
     return
   }
@@ -104,6 +105,7 @@ export function defaultApplyPatch(yTarget: YObject, patch: Patch): void {
   }
 
   const property = path[path.length - 1]!
+  console.log('applyPatchToProperty dbg')
   applyPatchToProperty(yNestedTarget, op, property, value)
 }
 
