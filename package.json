@@ -30,7 +30,8 @@
     "clean": "pnpm clean:out && pnpm clean:npm"
   },
   "dependencies": {
-    "@collight/jotai-immer": "0.0.1"
+    "@collight/jotai-immer": "0.0.1",
+    "@collight/json-serde": "0.0.2"
   },
   "peerDependencies": {
     "immer": "^10.1.1",

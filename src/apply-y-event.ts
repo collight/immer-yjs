@@ -1,7 +1,8 @@
+import { isJSONArray, isJSONObject, JSONArray, JSONObject, JSONValue } from '@collight/json-serde'
 import { produce } from 'immer'
 import * as Y from 'yjs'
 
-import { isJSONArray, isJSONObject, JSONArray, JSONObject, JSONValue, Snapshot, YEvent, YObject } from './util'
+import { Snapshot, YEvent, YObject } from './util'
 
 export type ApplyYEventFn = typeof defaultApplyYEvent
 

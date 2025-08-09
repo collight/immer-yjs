@@ -1,8 +1,9 @@
 import { Recipe } from '@collight/jotai-immer'
+import { isJSONArray, isJSONObject, isJSONPrimitive, JSONValue } from '@collight/json-serde'
 import { Patch, produceWithPatches } from 'immer'
 import * as Y from 'yjs'
 
-import { isJSONArray, isJSONObject, isJSONPrimitive, JSONValue, Snapshot, YObject } from './util'
+import { Snapshot, YObject } from './util'
 
 export type ApplyPatchFn = typeof defaultApplyPatch
 

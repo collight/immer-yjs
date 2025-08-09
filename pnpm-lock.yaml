@@ -10,6 +10,9 @@ importers:
       '@collight/jotai-immer':
         specifier: 0.0.1
         version: 0.0.1(@collight/immer-view@0.0.4(immer@10.1.1))(immer@10.1.1)(jotai@2.13.0(@babel/template@7.27.2))
+      '@collight/json-serde':
+        specifier: 0.0.2
+        version: 0.0.2
       immer:
         specifier: ^10.1.1
         version: 10.1.1
@@ -175,6 +178,13 @@ packages:
       '@collight/immer-view': ^0.0.4
       immer: ^10.1.1
       jotai: ^2.13.0
+
+  '@collight/json-serde@0.0.2':
+    resolution:
+      {
+        integrity: sha512-wwKVMZCRSkwSlKa6gkQhKCXXNG9DxkfGnwV4+SY/HmcfDvAZuitVogFy0X5Gp/uKAzE9mP7D3+skEbeUSDt1gQ==,
+        tarball: https://registry.npmjs.org/@collight/json-serde/-/json-serde-0.0.2.tgz,
+      }
 
   '@esbuild/aix-ppc64@0.25.8':
     resolution:
@@ -4235,6 +4245,8 @@ snapshots:
       '@collight/immer-view': 0.0.4(immer@10.1.1)
       immer: 10.1.1
       jotai: 2.13.0(@babel/template@7.27.2)
+
+  '@collight/json-serde@0.0.2': {}
 
   '@esbuild/aix-ppc64@0.25.8':
     optional: true
