@@ -1,12 +1,13 @@
-import { atom, WritableAtom } from 'jotai/vanilla'
+import { AtomWithImmer, Recipe } from '@collight/jotai-immer'
+import { atom } from 'jotai/vanilla'
 
-import type { Recipe, Snapshot, YObject } from '../util'
+import type { Snapshot, YObject } from '../util'
 import { YjsBinding, YjsBindingOptions } from '../YjsBinding'
 
-export function atomWithYjsBinding<S extends Snapshot>(
+export function atomWithImmerYjs<S extends Snapshot>(
   y: YObject,
   options?: Partial<YjsBindingOptions<S>>,
-): WritableAtom<S, [recipe: Recipe<S>], void> {
+): AtomWithImmer<S> {
   const binding = YjsBinding.from(y, options)
 
   // Base atom holds the actual current snapshot state
@@ -25,14 +26,11 @@ export function atomWithYjsBinding<S extends Snapshot>(
     }
   }
 
-  // Public atom just proxies to the internal one, but supports Immer-style update
-  const bindingAtom = atom(
+  return atom(
     get => get(internalAtom),
-    (get, _set, recipe: Recipe<S>) => {
+    (get, _set, recipe: S | Recipe<S>) => {
       get(internalAtom)
       binding.update(recipe)
     },
-  )
-
-  return bindingAtom
+  ) as AtomWithImmer<S>
 }

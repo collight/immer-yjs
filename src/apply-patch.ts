@@ -1,7 +1,8 @@
+import { Recipe } from '@collight/jotai-immer'
 import { Patch, produceWithPatches } from 'immer'
 import * as Y from 'yjs'
 
-import { isJSONArray, isJSONObject, isJSONPrimitive, JSONValue, Recipe, Snapshot, YObject } from './util'
+import { isJSONArray, isJSONObject, isJSONPrimitive, JSONValue, Snapshot, YObject } from './util'
 
 export type ApplyPatchFn = typeof defaultApplyPatch
 
@@ -112,10 +113,13 @@ export function defaultApplyPatch(yTarget: YObject, patch: Patch): void {
 export function applyPatches<S extends Snapshot>(
   yTarget: YObject,
   snapshot: S,
-  recipe: Recipe<S>,
+  recipe: S | Recipe<S>,
   applyPatch: typeof defaultApplyPatch,
 ): S {
-  const [newSnapshot, patches] = produceWithPatches(snapshot, recipe)
+  const [newSnapshot, patches] = produceWithPatches(
+    snapshot,
+    typeof recipe === 'function' ? recipe : ((_ => recipe) as Recipe<S>),
+  )
   for (const patch of patches) {
     applyPatch(yTarget, patch)
   }

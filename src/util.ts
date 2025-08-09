@@ -1,4 +1,3 @@
-import { WritableDraft } from 'immer'
 import * as Y from 'yjs'
 
 // MARK: JSON
@@ -46,5 +45,3 @@ export type YEvent = Y.YEvent<Y.AbstractType<unknown>>
 
 // MARK: Snapshot
 export type Snapshot = ReadonlyJSONArray | ReadonlyJSONObject
-
-export type Recipe<S extends Snapshot> = (draft: WritableDraft<S>) => void

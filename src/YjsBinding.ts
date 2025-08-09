@@ -1,9 +1,10 @@
+import { Recipe } from '@collight/jotai-immer'
 import { enablePatches } from 'immer'
 import * as Y from 'yjs'
 
 import { applyPatches, ApplyPatchFn, defaultApplyPatch } from './apply-patch'
 import { ApplyYEventFn, applyYEvents, defaultApplyYEvent } from './apply-y-event'
-import { Recipe, Snapshot, YEvent, YObject } from './util'
+import { Snapshot, YEvent, YObject } from './util'
 
 enablePatches()
 
@@ -21,7 +22,7 @@ export class YjsBinding<S extends Snapshot> {
   static from<S extends Snapshot>(y: YObject, options: Partial<YjsBindingOptions<S>> = {}): YjsBinding<S> {
     const binding = new this<S>(y, options.applyPatch ?? defaultApplyPatch, options.applyYEvent ?? defaultApplyYEvent)
     if (options.initialData) {
-      binding.update(() => options.initialData)
+      binding.update((() => options.initialData) as Recipe<S>)
     }
     return binding
   }
@@ -36,7 +37,7 @@ export class YjsBinding<S extends Snapshot> {
   /**
    * Update the snapshot with the immer recipe and let the data flow to yjs source
    */
-  readonly update = (recipe: Recipe<S>): void => {
+  readonly update = (recipe: S | Recipe<S>): void => {
     this.snapshot = applyPatches(this.y, this.get(), recipe, this.applyPatch)
   }
 

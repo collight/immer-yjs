@@ -2,7 +2,7 @@ import { getDefaultStore } from 'jotai/vanilla'
 import { describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
 
-import { atomWithYjsBinding } from '../src/jotai'
+import { atomWithImmerYjs } from '../src/jotai'
 
 describe('atomWithYjs - integration', () => {
   it('should initialize with value from Y.Map', () => {
@@ -11,7 +11,7 @@ describe('atomWithYjs - integration', () => {
     yMap.set('count', 1)
 
     type State = { count: number }
-    const counterAtom = atomWithYjsBinding<State>(yMap)
+    const counterAtom = atomWithImmerYjs<State>(yMap)
     const store = getDefaultStore()
 
     const snapshot = store.get(counterAtom)
@@ -24,7 +24,7 @@ describe('atomWithYjs - integration', () => {
     yMap.set('count', 2)
 
     type State = { count: number }
-    const counterAtom = atomWithYjsBinding<State>(yMap)
+    const counterAtom = atomWithImmerYjs<State>(yMap)
     const store = getDefaultStore()
 
     store.set(counterAtom, draft => {
@@ -47,7 +47,7 @@ describe('atomWithYjs - integration', () => {
     yMap.set('count', 10)
 
     type State = { count: number }
-    const counterAtom = atomWithYjsBinding<State>(yMap)
+    const counterAtom = atomWithImmerYjs<State>(yMap)
     const store = getDefaultStore()
 
     const updates: State[] = []
@@ -71,7 +71,7 @@ describe('atomWithYjs - integration', () => {
     yMap.set('count', 7)
 
     type State = { count: number }
-    const counterAtom = atomWithYjsBinding<State>(yMap)
+    const counterAtom = atomWithImmerYjs<State>(yMap)
     const store = getDefaultStore()
 
     const unsubscribe = store.sub(counterAtom, () => {

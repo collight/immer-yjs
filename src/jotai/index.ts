@@ -1,1 +1,1 @@
-export * from './atomWithYjsBinding'
+export * from './atomWithImmerYjs'
